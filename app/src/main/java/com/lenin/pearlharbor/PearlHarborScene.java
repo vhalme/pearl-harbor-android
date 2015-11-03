@@ -521,9 +521,9 @@ public class PearlHarborScene extends Scene implements Runnable {
             if (ss.splash()) {
 
                 if (((Surface)(ss)).width != 30) {
-                    tmpsurf3.fetchPixels(screen.getPixels(), 640, (int) ((double) ss.sx - zero.x), ss.sy);
-                    tmpsurf3.draw(ss, 0, 0, ((Surface) (ss)).width, ((Surface) (ss)).height, false, 0);
-                    tmpsurf3.blur();
+                    //tmpsurf3.fetchPixels(screen.getPixels(), 640, (int) ((double) ss.sx - zero.x), ss.sy);
+                    //tmpsurf3.draw(ss, 0, 0, ((Surface) (ss)).width, ((Surface) (ss)).height, false, 0);
+                    //tmpsurf3.blur();
                     screen.draw(ss, (int) ((double) ss.sx - zero.x), ss.sy, ((Surface) (tmpsurf3)).width, ((Surface) (tmpsurf3)).height, false, 0);
                 } else {
                     blur.fetchPixels(screen.getPixels(), 640, (int) ((double) ss.sx - zero.x), ss.sy);
