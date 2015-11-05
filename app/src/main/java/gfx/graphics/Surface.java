@@ -122,6 +122,8 @@ public class Surface {
                 if (s.getPixels()[ibmp] != s.tcol)
                     if (s.alpha == 0.0D) {
                         //System.out.print("Y(" + (dsx + j) + "," + (dsy + i) + ") ");
+                        //pixels[iscr] = s.getPixels()[ibmp];
+                        //pixels[iscr] = ((pixels[iscr] & 0xf0f0f0f0) >>> 1) + ((s.getPixels()[ibmp] & 0xfefefefe) >>> 1);
                         pixels[iscr] = t ? ((pixels[iscr] & 0xf0f0f0f0) >>> 1) + ((s.getPixels()[ibmp] & 0xfefefefe) >>> 1) : s.getPixels()[ibmp];
                     } else {
                         int r0 = pixels[iscr] >> 16 & 0xff;

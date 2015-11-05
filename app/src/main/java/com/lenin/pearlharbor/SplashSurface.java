@@ -62,6 +62,8 @@ public class SplashSurface extends Surface {
         this.sy = sy;
         this.maxage = maxage;
         this.f = f;
+        setTransparentColor(0);
+        clear(0);
         particles = new ArrayList<Particle>();
         expiredParticles = new ArrayList<Particle>();
         for (int i = 0; i < ps; i++)
@@ -71,7 +73,7 @@ public class SplashSurface extends Surface {
         int c = 255;
         double dc = 255D / (double)maxage;
         for (int i = 0; i < maxage; i++) {
-            palette[i] = Color.YELLOW; //0xffffff;
+            palette[i] = 0xffffffff;
             c = (int)((double)c - dc);
         }
 

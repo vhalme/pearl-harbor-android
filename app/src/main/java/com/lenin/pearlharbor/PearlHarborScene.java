@@ -45,8 +45,14 @@ public class PearlHarborScene extends Scene implements Runnable {
     Sprite blimb;
     Sprite ground;
     Surface[] clouds0r;
+    Sprite[] ships;
+    Sprite[] carriers;
+    Sprite arrow0;
     List<Smoke> clouds;
     List<SplashSurface> splashes, expiredSplashes;
+    List<Bomb> bombs;
+    List<Target> targs;
+    List<Carrier> cars;
     Surface tmpsurf;
     BlurSurface tmpsurf3;
     BlurSurface blur;
@@ -75,6 +81,7 @@ public class PearlHarborScene extends Scene implements Runnable {
     int ysp;
     int blink;
     int dispx;
+    int appdist;
     double blimby;
     long time;
 
@@ -211,6 +218,9 @@ public class PearlHarborScene extends Scene implements Runnable {
         bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.sea);
         ground = new Sprite(Bitmap.createScaledBitmap(bmp, 640, 90, false));
 
+        bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.arrow0);
+        arrow0 = new Sprite(Bitmap.createScaledBitmap(bmp, 10, 10, false));
+
         clouds0r = new Surface[5];
         bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.pilvi);
         clouds0r[0] = new Surface(Bitmap.createScaledBitmap(bmp, 150, 78, false));
@@ -252,6 +262,34 @@ public class PearlHarborScene extends Scene implements Runnable {
         plane2 = new Sprite(planeBmp);
         plane2.setTransparentColor(plane2.getPixels()[0]);
 
+        ships = new Sprite[4];
+        bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.ship0);
+        ships[0] = new Sprite(Bitmap.createScaledBitmap(bmp, 105, 40, false));
+        ships[0].setTransparentColor(ships[0].getPixels()[0]);
+        bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.ship1);
+        ships[1] = new Sprite(Bitmap.createScaledBitmap(bmp, 105, 40, false));
+        ships[1].setTransparentColor(ships[1].getPixels()[0]);
+        bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.ship2);
+        ships[2] = new Sprite(Bitmap.createScaledBitmap(bmp, 105, 40, false));
+        ships[2].setTransparentColor(ships[2].getPixels()[0]);
+        bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.ship3);
+        ships[3] = new Sprite(Bitmap.createScaledBitmap(bmp, 105, 40, false));
+        ships[3].setTransparentColor(ships[3].getPixels()[0]);
+
+        carriers = new Sprite[4];
+        bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.carrier);
+        carriers[0] = new Sprite(Bitmap.createScaledBitmap(bmp, 135, 40, false));
+        carriers[0].setTransparentColor(carriers[0].getPixels()[0]);
+        bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.carrier_d0);
+        carriers[1] = new Sprite(Bitmap.createScaledBitmap(bmp, 135, 40, false));
+        carriers[1].setTransparentColor(carriers[1].getPixels()[0]);
+        bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.carrier_d1);
+        carriers[2] = new Sprite(Bitmap.createScaledBitmap(bmp, 135, 40, false));
+        carriers[2].setTransparentColor(carriers[2].getPixels()[0]);
+        bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.carrier_d2);
+        carriers[3] = new Sprite(Bitmap.createScaledBitmap(bmp, 135, 40, false));
+        carriers[3].setTransparentColor(carriers[3].getPixels()[0]);
+
         Bitmap bgBmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.bg);
         bgBmp = Bitmap.createScaledBitmap(bgBmp, 640, 350, false);
 
@@ -278,6 +316,9 @@ public class PearlHarborScene extends Scene implements Runnable {
         appr = false;
         zero = new Zero();
         clouds = new ArrayList<Smoke>();
+        bombs = new ArrayList<Bomb>();
+        targs = new ArrayList<Target>();
+        cars = new ArrayList<Carrier>();
         splashes = expiredSplashes = new ArrayList<SplashSurface>();
 
         switch (level) {
@@ -289,6 +330,18 @@ public class PearlHarborScene extends Scene implements Runnable {
                 lfs0 = 400;
                 lfs1 = 250;
                 mwidth = 3000;
+                Carrier car0 = new Carrier(1000D, 240D, 135D, 30D, carriers);
+                Carrier car1 = new Carrier(2000D, 240D, 135D, 30D, carriers);
+                Carrier car2 = new Carrier(2800D, 240D, 135D, 30D, carriers);
+                targs.add(car0);
+                targs.add(car1);
+                targs.add(car2);
+                cars.add(car0);
+                cars.add(car1);
+                cars.add(car2);
+                targs.add(new Target(500D, 240D, 100D, 30D, ships));
+                targs.add(new Target(1500D, 240D, 100D, 30D, ships));
+                targs.add(new Target(2300D, 240D, 100D, 30D, ships));
                 break;
 
         }
@@ -394,7 +447,7 @@ public class PearlHarborScene extends Scene implements Runnable {
 
             if (zero.status < 3) {
                 zero.status = 4;
-                SplashSurface ss = new SplashSurface(150, 100, (int)(zero.x + 320D), 160, 500, 100, 1.0D);
+                SplashSurface ss = new SplashSurface(150, 100, (int)(zero.x + 320D - 50), 160, 500, 100, 1.0D);
                 ss.setTransparentColor(0);
                 splashes.add(ss);
                 System.out.println("added splash: " + splashes.size());
@@ -421,23 +474,21 @@ public class PearlHarborScene extends Scene implements Runnable {
         fires[0].burn();
         fires[1].burn();
         fires[2].burn();
+        */
 
-        Enumeration enum=targs.elements();
+        List<Target> expiredTargets = new ArrayList<Target>();
+        List<Carrier> expiredCarriers = new ArrayList<Carrier>();
 
-        do {
+        for(Target t : targs) {
 
-            if (! enum.hasMoreElements())
-            break;
-
-            Target t = (Target) enum.nextElement();
-            int mtx = 5 + (int) (mapfx * t.x);
-            if (t instanceof Carrier) {
-                map.putPixel(65280, mtx, 53);
-                map.putPixel(65280, mtx + 1, 53);
-            } else {
-                map.putPixel(0xff0000, mtx, 53);
-                map.putPixel(0xff0000, mtx + 1, 53);
-            }
+            //int mtx = 5 + (int) (mapfx * t.x);
+            //if (t instanceof Carrier) {
+            //    map.putPixel(65280, mtx, 53);
+            //    map.putPixel(65280, mtx + 1, 53);
+            //} else {
+            //    map.putPixel(0xff0000, mtx, 53);
+            //    map.putPixel(0xff0000, mtx + 1, 53);
+            //}
 
             if (t.x + t.w > zero.x && t.x < zero.x + 640D) {
 
@@ -448,12 +499,12 @@ public class PearlHarborScene extends Scene implements Runnable {
                     t.status++;
                 }
 
-                if (t.status == 20 && bub != null)
-                    bub.play();
+                //if (t.status == 20 && bub != null)
+                //    bub.play();
 
                 if (t.status >= 80) {
 
-                    targs.removeElement(t);
+                    expiredTargets.add(t);
                     if (zero.x + 320D > t.x - 150D && zero.x + 320D < t.x + 250D) {
                         if (zero.status < 3)
                             zero.status = -1;
@@ -461,28 +512,32 @@ public class PearlHarborScene extends Scene implements Runnable {
                         apst = -1;
                     }
 
-                    cars.removeElement(t);
+                    expiredCarriers.add((Carrier)t);
+                    //cars.removeElement(t);
 
                 } else {
 
                     drawSprite(t.pic[t.fp], (int) (t.x - zero.x), sinkf - 10);
 
-                    int i = 0;
-                    while (i < 3) {
+                    //int i = 0;
+                    //while (i < 3) {
 
-                        if (t.fs[i] != -1)
-                            screen.draw(fires[i], ((int) (t.x - zero.x) + t.fs[i]) - 20, sinkf - 77, 50, 100, false, 0);
-                        i++;
+                        //if (t.fs[i] != -1)
+                        //    screen.draw(fires[i], ((int) (t.x - zero.x) + t.fs[i]) - 20, sinkf - 77, 50, 100, false, 0);
+                        //i++;
 
-                    }
+                    //}
 
                 }
 
-            } else if (t.status > -1)
-                targs.removeElement(t);
+            } else if (t.status > -1) {
+                expiredTargets.add(t);
+            }
 
-        } while (true);
-        */
+        }
+
+        targs.removeAll(expiredTargets);
+        cars.removeAll(expiredCarriers);
 
         if (doTest) {
             test();
@@ -520,11 +575,11 @@ public class PearlHarborScene extends Scene implements Runnable {
 
             if (ss.splash()) {
 
-                if (((Surface)(ss)).width != 30) {
-                    //tmpsurf3.fetchPixels(screen.getPixels(), 640, (int) ((double) ss.sx - zero.x), ss.sy);
-                    //tmpsurf3.draw(ss, 0, 0, ((Surface) (ss)).width, ((Surface) (ss)).height, false, 0);
-                    //tmpsurf3.blur();
-                    screen.draw(ss, (int) ((double) ss.sx - zero.x), ss.sy, ((Surface) (tmpsurf3)).width, ((Surface) (tmpsurf3)).height, false, 0);
+                if (ss.width != 30) {
+                    tmpsurf3.fetchPixels(screen.getPixels(), 640, (int)((double)ss.sx - zero.x), ss.sy);
+                    tmpsurf3.draw(ss, 0, 0, ss.width, ss.height, false, 0);
+                    tmpsurf3.blur();
+                    screen.draw(tmpsurf3, (int)((double)ss.sx - zero.x), ss.sy, tmpsurf3.width, tmpsurf3.height, false, 0);
                 } else {
                     blur.fetchPixels(screen.getPixels(), 640, (int) ((double) ss.sx - zero.x), ss.sy);
                     blur.draw(ss, 0, 0, ((Surface) (ss)).width, ((Surface) (ss)).height, false, 0);
@@ -1017,6 +1072,14 @@ public class PearlHarborScene extends Scene implements Runnable {
 
     private void test() {
 
+        int pixel = Color.GRAY;
+        int a = (pixel >> 24) & 0xff;
+        int r = (pixel >> 16) & 0xff;
+        int g = (pixel >> 8) & 0xff;
+        int b = pixel & 0xff;
+        int repacked = a << 24 | r << 16 | g << 8 | b;
+        System.out.println(pixel + " => " + a+","+r+","+g+","+b + " => " + repacked);
+
         SplashSurface ss = new SplashSurface(150, 100, (int)(zero.x + 320D), 160, 500, 100, 1.0D);
         //ss.setTransparentColor(0);
         splashes.add(ss);
@@ -1120,5 +1183,130 @@ public class PearlHarborScene extends Scene implements Runnable {
 
     }
 
+    class Target {
+
+        public boolean isHit(Bomb b) {
+            return b.x + 320D > x && b.x + 320D < x + w && b.y > y && b.y < y + h;
+        }
+
+        double x;
+        double y;
+        double w;
+        double h;
+        int d;
+        int md;
+        int status;
+        int val;
+        Sprite pic[];
+        int fp;
+        int fs[];
+        int att;
+
+        public Target(double x, double y, double w, double h, Sprite pic[]) {
+            d = 0;
+            md = 9;
+            status = -1;
+            val = 200;
+            fp = 0;
+            att = 0;
+            this.x = x;
+            this.y = y;
+            this.w = w;
+            this.h = h;
+            this.pic = pic;
+            fs = new int[3];
+            fs[0] = -1;
+            fs[1] = -1;
+            fs[2] = -1;
+        }
+
+    }
+
+    class Carrier extends Target {
+
+        public boolean isApproached() {
+            if (zero.x + 320D > super.x - 100D && zero.x + 320D < super.x + 200D) {
+                apst = 0;
+                //getGraphicsBuffer().setColor(Color.red);
+                if (zero.x + 320D < super.x + 60D)
+                    drawSprite(arrow0, 95 + (int)(super.x - zero.x), (int)(zero.y + 12D), 0);
+                if (zero.x + 320D > super.x)
+                    drawSprite(arrow0, (int)(super.x - zero.x) - 10, (int)(zero.y + 12D), -1);
+                if (zero.x + 320D < super.x)
+                    appdist = (int)(super.x - zero.x) - 320;
+                else
+                if(zero.x + 320D > super.x + 60D)
+                    appdist = (int)Math.abs(((super.x - zero.x) + 60D) - 320D);
+                else
+                    appdist = 1000;
+                if (zero.y > 100D && zero.status < 3) {
+                    zero.status = 0;
+                    //getGraphicsBuffer().drawLine(0, (int)zero.y, 640, (int)zero.y);
+                    //getGraphicsBuffer().drawLine(0, 250, 640, 250);
+                } else
+                if (zero.status < 3)
+                    zero.status = -1;
+                if (zero.x + 320D > super.x && zero.x + 320D < super.x + 60D) {
+                    appdist = 1000;
+                    apst = 1;
+                    appr = true;
+                    if (zero.y > 230D) {
+                        apst = 2;
+                        if (Math.abs(zero.vx) < 5D && Math.abs(zero.vy + zero.dvy) < 2D && zero.status < 3 && zero.y < 232.09999999999999D) {
+                            System.out.println("OK: " + zero.vx + "/" + (zero.vy + zero.dvy));
+                            zero.status = 1;
+                        } else if (zero.status < 3) {
+                            zero.status = 3;
+                            super.fs[super.fp] = 40;
+                            //if(expl != null)
+                            //    expl.play();
+                        } else {
+                            zero.status++;
+                        }
+                    } else {
+                        apst = 1;
+                    }
+                } else {
+                    apst = 0;
+                    appr = false;
+                }
+            } else if (zero.x + 320D > super.x - 150D && zero.x + 320D < super.x + 250D && zero.status < 3) {
+                zero.status = -1;
+                apst = -1;
+            }
+
+            return false;
+
+        }
+
+        public Carrier(double x, double y, double w,
+                       double h, Sprite pic[])
+        {
+            super(x, y, w, h, pic);
+            super.val = -500;
+            super.md = 100;
+        }
+    }
+
+
+    class Bomb {
+
+        double x;
+        double y;
+        double vx;
+        double vy;
+        int age;
+        int type;
+
+        public Bomb(double x, double y, double vx, double vy) {
+            age = 0;
+            type = -1;
+            this.x = x;
+            this.y = y;
+            this.vx = vx;
+            this.vy = vy;
+        }
+
+    }
 
 }
