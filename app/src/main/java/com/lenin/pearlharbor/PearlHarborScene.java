@@ -44,20 +44,27 @@ public class PearlHarborScene extends Scene implements Runnable {
     Sprite pltmp;
     Sprite blimb;
     Sprite ground;
+    Sprite ctrl0;
     Surface[] clouds0r;
     Sprite[] ships;
     Sprite[] carriers;
+    Sprite[] amplanes;
+    Sprite[] l2cool;
     Sprite arrow0;
     List<Smoke> clouds;
     List<SplashSurface> splashes, expiredSplashes;
     List<Bomb> bombs;
+    List<Bomb> ammos;
+    List<Bomb> ammos2;
     List<Target> targs;
     List<Carrier> cars;
+    List<Amplane> ampls;
     Surface tmpsurf;
     BlurSurface tmpsurf3;
     BlurSurface blur;
     WaterSurface water;
     FireSurface[] fires;
+    FireSurface lfire;
     Surface screen;
 
     boolean kshoot;
@@ -170,6 +177,8 @@ public class PearlHarborScene extends Scene implements Runnable {
         tmpsurf3 = new BlurSurface(150, 100);
         blur = new BlurSurface(30, 30);
         water = new WaterSurface(640, 90);
+        lfire = new FireSurface(257, 150, l2cool[0].getPixels(), true, 10, 148, 230, 2);
+        ammos2 = new ArrayList<Bomb>();
 
         Canvas canvas = null;
         while (keepRunning) {
@@ -210,6 +219,10 @@ public class PearlHarborScene extends Scene implements Runnable {
     private void loadStuff() {
 
         Bitmap bmp;
+
+        bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.mittarit2);
+        ctrl0 = new Sprite(Bitmap.createScaledBitmap(bmp, 200, 80, false));
+        ctrl0.setAlphaBlended(true);
 
         bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.blimb);
         bmp = Bitmap.createScaledBitmap(bmp, 108, 100, false);
@@ -263,6 +276,20 @@ public class PearlHarborScene extends Scene implements Runnable {
         plane2 = new Sprite(planeBmp);
         plane2.setTransparentColor(plane2.getPixels()[0]);
 
+        amplanes = new Sprite[4];
+        bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.amplane0);
+        amplanes[0] = new Sprite(Bitmap.createScaledBitmap(bmp, 32, 10, false));
+        amplanes[0].setTransparentColor(amplanes[0].getPixels()[0]);
+        bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.amplane1);
+        amplanes[1] = new Sprite(Bitmap.createScaledBitmap(bmp, 32, 10, false));
+        amplanes[1].setTransparentColor(amplanes[1].getPixels()[0]);
+        bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.amplane0);
+        amplanes[2] = new Sprite(Bitmap.createScaledBitmap(bmp, 32, 10, false));
+        amplanes[2].setTransparentColor(amplanes[2].getPixels()[0]);
+        bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.amplane0);
+        amplanes[3] = new Sprite(Bitmap.createScaledBitmap(bmp, 32, 10, false));
+        amplanes[3].setTransparentColor(amplanes[3].getPixels()[0]);
+
         ships = new Sprite[4];
         bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.ship0);
         ships[0] = new Sprite(Bitmap.createScaledBitmap(bmp, 105, 40, false));
@@ -305,6 +332,22 @@ public class PearlHarborScene extends Scene implements Runnable {
         fires[1].setTransparentColor(0xff000000);
         fires[2].setTransparentColor(0xff000000);
 
+        l2cool = new Sprite[7];
+        bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.l2cool2);
+        l2cool[0] = new Sprite(Bitmap.createScaledBitmap(bmp, 257, 150, false));
+        bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.l2cool3);
+        l2cool[1] = new Sprite(Bitmap.createScaledBitmap(bmp, 257, 150, false));
+        bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.l2cool4);
+        l2cool[2] = new Sprite(Bitmap.createScaledBitmap(bmp, 257, 150, false));
+        bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.l2cool5);
+        l2cool[3] = new Sprite(Bitmap.createScaledBitmap(bmp, 257, 150, false));
+        bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.l2cool6);
+        l2cool[4] = new Sprite(Bitmap.createScaledBitmap(bmp, 257, 150, false));
+        bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.l2cool7);
+        l2cool[5] = new Sprite(Bitmap.createScaledBitmap(bmp, 257, 150, false));
+        bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.l2cool8);
+        l2cool[6] = new Sprite(Bitmap.createScaledBitmap(bmp, 257, 150, false));
+
         Bitmap bgBmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.bg);
         bgBmp = Bitmap.createScaledBitmap(bgBmp, 640, 350, false);
 
@@ -332,8 +375,10 @@ public class PearlHarborScene extends Scene implements Runnable {
         zero = new Zero();
         clouds = new ArrayList<Smoke>();
         bombs = new ArrayList<Bomb>();
+        ammos = new ArrayList<Bomb>();
         targs = new ArrayList<Target>();
         cars = new ArrayList<Carrier>();
+        ampls = new ArrayList<Amplane>();
         splashes = expiredSplashes = new ArrayList<SplashSurface>();
 
         switch (level) {
@@ -357,6 +402,11 @@ public class PearlHarborScene extends Scene implements Runnable {
                 targs.add(new Target(500D, 240D, 100D, 30D, ships));
                 targs.add(new Target(1500D, 240D, 100D, 30D, ships));
                 targs.add(new Target(2300D, 240D, 100D, 30D, ships));
+                for (int i = 0; i < 3; i++) {
+                    Amplane ampl = new Amplane(Math.random() * 2800D, 40D + Math.random() * 120D, 30D, 30D, amplanes);
+                    ampls.add(ampl);
+                }
+
                 break;
 
         }
@@ -422,18 +472,22 @@ public class PearlHarborScene extends Scene implements Runnable {
             kbomb = false;
         }
 
-        /*
-        if (kshoot)
+        if (kshoot) {
             if (zero.ams > 0) {
 
-                if(zero.vx > 0.0D)
-                    ammos.addElement(new Bomb(zero.x + 25D, zero.y + 15D + zero.vy, zero.vx + 7D, zero.vy + zero.dvy + zero.vy));
+                if (zero.vx > 0.0D)
+                    ammos.add(new Bomb(zero.x + 25D, zero.y + 15D + zero.vy, zero.vx + 7D, zero.vy + zero.dvy + zero.vy));
                 else
-                    ammos.addElement(new Bomb(zero.x + 1.0D, zero.y + 17D + zero.vy, zero.vx - 7D, zero.vy + zero.dvy + zero.vy));
+                    ammos.add(new Bomb(zero.x + 1.0D, zero.y + 17D + zero.vy, zero.vx - 7D, zero.vy + zero.dvy + zero.vy));
                 zero.ams--;
-            } else if(mg != null)
-                mg.stop();
-        */
+
+            } else { //if(mg != null) {
+                //mg.stop();
+            }
+
+            kshoot = false;
+
+        }
 
         clear();
 
@@ -637,36 +691,29 @@ public class PearlHarborScene extends Scene implements Runnable {
 
 
         calcBombs();
-
-        /*
         calcAmmos();
-        */
 
         zero.move();
 
-        /*
-        enum=ampls.elements();
-        do {
+        List<Amplane> expiredAmplanes = new ArrayList<Amplane>();
+        for (Amplane a: ampls) {
 
-            if (! enum.hasMoreElements())
-            break;
-
-            Amplane a = (Amplane) enum.nextElement();
             a.move();
-            int mtx = 5 + (int) (mapfx * ((Target) (a)).x);
-            int mty = 5 + (int) (mapfy * ((Target) (a)).y);
-            map.putPixel(0xffffff, mtx, mty);
-            map.putPixel(0xffffff, mtx + 1, mty);
+
+            //int mtx = 5 + (int) (mapfx * ((Target) (a)).x);
+            //int mty = 5 + (int) (mapfy * ((Target) (a)).y);
+            //map.putPixel(0xffffff, mtx, mty);
+            //map.putPixel(0xffffff, mtx + 1, mty);
 
             if (((Target) (a)).y > 255D) {
 
-                ampls.removeElement(a);
+                expiredAmplanes.add(a);
                 int splfix = a.vx <= 0.0D ? -30 : -55;
                 SplashSurface ss = new SplashSurface(150, 100, (int) ((Target) (a)).x + splfix, 160, 500, 100, 1.0D);
                 ss.setTransparentColor(0);
-                splashes.addElement(ss);
-                if (psplash != null)
-                    psplash.play();
+                splashes.add(ss);
+                //if (psplash != null)
+                //    psplash.play();
 
             } else if (((Target) (a)).x + ((Target) (a)).w > zero.x && ((Target) (a)).x < zero.x + 640D) {
 
@@ -681,6 +728,7 @@ public class PearlHarborScene extends Scene implements Runnable {
                 a.adx = (int) (((Target) (a)).x - zero.x);
                 a.checkAmmos();
 
+                /*
                 if (a.vx > 0.0D) {
                     drawSprite(((Target) (a)).pic[((Target) (a)).fp], (int) (((Target) (a)).x - zero.x), (int) ((Target) (a)).y, 0);
                     if (((Target) (a)).d > ((Target) (a)).md)
@@ -690,11 +738,15 @@ public class PearlHarborScene extends Scene implements Runnable {
                     if (((Target) (a)).d >= ((Target) (a)).md)
                         smokes.addElement(new Smoke((int) (((Target) (a)).x + Math.random() * 3D) + 30, (int) (((Target) (a)).y + Math.random() * 3D)));
                 }
+                */
 
             }
 
-        } while (true);
+        }
 
+        ampls.removeAll(expiredAmplanes);
+
+        /*
         if (zero.dvy > 0.0D)
             if (zero.vx > 0.0D)
                 smokes.addElement(new Smoke((int) (320D + zero.x + Math.random() * 3D) - 10, (int) (zero.y + Math.random() * 3D)));
@@ -752,20 +804,15 @@ public class PearlHarborScene extends Scene implements Runnable {
                 land0.setAlphaBlended(false);
             drawSprite(land0, 260, 0);
         }
+        */
 
         if (zero.status != 1) {
 
-            enum=cars.elements();
-            do {
-
-                if (! enum.hasMoreElements())
-                break;
-
-                Carrier t = (Carrier) enum.nextElement();
-                if (t.isApproached())
+            for (Carrier c: cars) {
+                if (c.isApproached())
                     System.out.println("approach: " + zero.vx + "/" + (zero.vy + zero.dvy));
 
-            } while (true);
+            }
 
         } else if (zero.fuel < 2500 || zero.ams < 200 || zero.bs < 50 || zero.hits > 0) {
 
@@ -816,6 +863,7 @@ public class PearlHarborScene extends Scene implements Runnable {
             screen.draw(lfire, 230, 80, 257, 148, true, 0);
         }
 
+        /*
         update(getPixels());
 
         if (zero.status > 10) {
@@ -1088,6 +1136,88 @@ public class PearlHarborScene extends Scene implements Runnable {
 
     }
     */
+
+    private void calcAmmos() {
+
+        List<Bomb> expiredAmmos = new ArrayList<Bomb>();
+        for (Bomb b: ammos) {
+
+            b.vy += 0.0050000000000000001D;
+            if(zero.vx > 0.0D)
+            {
+                if(b.vx > 0.0D)
+                    b.vx -= 0.0050000000000000001D;
+            } else
+            if(b.vx < 0.0D)
+                b.vx += 0.0050000000000000001D;
+            b.x += b.vx;
+            b.y += b.vy;
+            b.age++;
+            boolean hit = false;
+
+            for (Amplane t: ampls) {
+
+                if(!t.isHit(b) || ((Target) (t)).status != -1)
+                    continue;
+
+                hit = true;
+                if(((Target) (t)).att == 0)
+                    t.att = 20;
+                t.d++;
+                if(((Target) (t)).d >= ((Target) (t)).md)
+                {
+                    t.vy += 0.5D;
+                    if(((Target) (t)).d == ((Target) (t)).md)
+                    {
+                        points += ((Target) (t)).val;
+                        t.fp = 1;
+                    }
+                }
+                break;
+            }
+
+            int bx = dispx - (int)(zero.x - b.x);
+            if(b.age > 100 || b.y > 260D || b.y < 0.0D || hit)
+                expiredAmmos.add(b);
+            else
+            if(bx > 0 && bx < 640 && b.type == -1)
+                putPixel(0xffff00, bx, (int)b.y);
+
+        }
+
+        ammos.removeAll(expiredAmmos);
+
+        //label0;
+
+        expiredAmmos = new ArrayList<Bomb>();
+        for (Bomb b: ammos2) {
+
+            int amplIndex = 0;
+            Amplane t = ampls.get(amplIndex);
+            do {
+
+                if(amplIndex == ampls.size())
+                    break;
+
+                t = (Amplane)ampls.get(amplIndex);
+                amplIndex++;
+
+            } while(b.y <= t.y || b.y >= t.y + t.h || b.x <= t.x || b.x >= t.x + t.w || t.status != -1);
+
+            t.d++;
+
+            if(((Target) (t)).d >= ((Target) (t)).md)
+            {
+                t.vy += 0.5D;
+                if(((Target) (t)).d == ((Target) (t)).md)
+                    t.fp = 1;
+            }
+            expiredAmmos.add(b);
+        }
+
+        ammos2.removeAll(expiredAmmos);
+
+    }
 
     private void calcBombs() {
 
@@ -1373,6 +1503,139 @@ public class PearlHarborScene extends Scene implements Runnable {
             super(x, y, w, h, pic);
             super.val = -500;
             super.md = 100;
+        }
+    }
+
+    class Amplane extends Target {
+
+        public void shoot() {
+            sctr++;
+            if(sctr < 6)
+            {
+                Bomb b;
+                if(vx > 0.0D)
+                    b = new Bomb(super.x + 31D, super.y + 5D, vx + 7D, vy);
+                else
+                    b = new Bomb(super.x - 1.0D, super.y + 5D, vx - 7D, vy);
+                b.type = 0;
+                fire.add(b);
+                ammos2.add(b);
+            }
+            if(sctr > 20)
+                sctr = 0;
+        }
+
+        public void checkAmmos() {
+
+            List<Bomb> expiredAmmos = new ArrayList<Bomb>();
+            List<Bomb> expiredFire = new ArrayList<Bomb>();
+
+            for (Bomb b: fire) {
+
+                b.vy += 0.0050000000000000001D;
+                if(zero.vx > 0.0D)
+                {
+                    if(b.vx > 0.0D)
+                        b.vx -= 0.0050000000000000001D;
+                } else
+                if(b.vx < 0.0D)
+                    b.vx += 0.0050000000000000001D;
+                b.x += b.vx;
+                b.y += b.vy;
+                b.age++;
+                int bx = adx - (int)(super.x - b.x);
+                boolean hit = false;
+                if(bx > 320 && bx < 350 && b.y > zero.y && b.y < zero.y + 30D)
+                {
+                    zero.hits++;
+                    if(zero.hits > zero.mhits)
+                    {
+                        zero.dvy += 0.29999999999999999D;
+                        if(zero.vx > 6D)
+                            zero.vx = 6D;
+                        if(zero.vx < -6D)
+                            zero.vx = -6D;
+                    }
+                    hit = true;
+                }
+                if(b.age > 100 || b.y > 260D || b.y < 0.0D || hit) {
+                    expiredFire.add(b);
+                    expiredAmmos.add(b);
+                } else
+                if(bx > 0 && bx < 640)
+                    putPixel(65280, bx, (int)b.y);
+            }
+
+            ammos2.removeAll(expiredAmmos);
+            fire.removeAll(expiredFire);
+
+        }
+
+        public void move() {
+
+            super.x += vx;
+            super.y += vy;
+            if(super.x < 0.0D)
+            {
+                super.x = 1.0D;
+                vx = -vx;
+            } else
+            if(super.x > (double)mwidth)
+            {
+                super.x = mwidth - 1;
+                vx = -vx;
+            }
+
+            List<Target> expiredAmplanes = new ArrayList<Target>();
+
+            for (Target t: targs) {
+
+                if(super.x <= t.x || super.x >= t.x + t.w || super.y <= 245D)
+                    continue;
+
+                t.d += 50;
+                double df = t.md / 3;
+                if((double)(t.fp + 1) * df <= (double)t.d && t.fp < 3)
+                {
+                    t.fs[t.fp] = 10 + (int)(((t.w - 6D) / 3D) * (double)t.fp);
+                    t.fp++;
+                    //if(expl != null)
+                    //    expl.play();
+                }
+                if(t.d > t.md && t.status == -1)
+                {
+                    t.status = 0;
+                    points += t.val;
+                }
+
+                expiredAmplanes.add(this);
+                break;
+
+            }
+
+            ampls.removeAll(expiredAmplanes);
+
+        }
+
+        double vx;
+        double vy;
+        List<Bomb> fire;
+        int sctr;
+        int adx;
+
+        public Amplane(double x, double y, double w,
+                       double h, Sprite pic[])
+        {
+            super(x, y, w, h, pic);
+            sctr = 0;
+            adx = 0;
+            if(-1D + Math.random() * 2D < 0.0D)
+                vx = 6D;
+            else
+                vx = -6D;
+            fire = new ArrayList<Bomb>();
+            super.val = 100;
+            super.md = 9;
         }
     }
 
