@@ -301,9 +301,9 @@ public class PearlHarborScene extends Scene implements Runnable {
         fires[0] = new FireSurface(50, 100, cm0.getPixels(), true, 20, 90, 10, 10);
         fires[1] = new FireSurface(50, 100, cm1.getPixels(), true, 20, 90, 10, 10);
         fires[2] = new FireSurface(50, 100, cm2.getPixels(), true, 20, 90, 10, 10);
-        fires[0].setTransparentColor(fires[0].getPixels()[0]);
-        fires[1].setTransparentColor(fires[0].getPixels()[0]);
-        fires[2].setTransparentColor(fires[0].getPixels()[0]);
+        fires[0].setTransparentColor(0xff000000);
+        fires[1].setTransparentColor(0xff000000);
+        fires[2].setTransparentColor(0xff000000);
 
         Bitmap bgBmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.bg);
         bgBmp = Bitmap.createScaledBitmap(bgBmp, 640, 350, false);

@@ -22,13 +22,13 @@ public class FireSurface extends Surface {
             coolmap[i] = (cm[i] & 0xff) / 5;
 
         for(int i = 0; i < 128; i++)
-            palette[i] = 0 | i * 2 << 16;
+            palette[i] = 0xff000000 | i * 2 << 16;
 
         for(int i = 0; i < 128; i++)
-            palette[128 + i] = 0xff0000 | i * 2 << 8;
+            palette[128 + i] = 0xffff0000 | i * 2 << 8;
 
         for(int i = 0; i < 255; i++)
-            palette[255 + i] = 0xffff00 | i;
+            palette[255 + i] = 0xffffff00 | i;
 
     }
 
