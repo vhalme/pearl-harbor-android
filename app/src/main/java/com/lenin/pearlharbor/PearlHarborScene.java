@@ -396,15 +396,18 @@ public class PearlHarborScene extends Scene implements Runnable {
             zero.pos = 2;
         }
 
-        /*
+
         if (kbomb && zero.bs > 0) {
+            System.out.println("drop bomb");
             if (zero.vx > 0.0D)
-                bombs.addElement(new Bomb(zero.x + 10D, zero.y + 20D, zero.vx, zero.vy + zero.dvy));
+                bombs.add(new Bomb(zero.x + 10D, zero.y + 20D, zero.vx, zero.vy + zero.dvy));
             else
-                bombs.addElement(new Bomb(zero.x + 20D, zero.y + 20D, zero.vx, zero.vy + zero.dvy));
+                bombs.add(new Bomb(zero.x + 20D, zero.y + 20D, zero.vx, zero.vy + zero.dvy));
             zero.bs--;
+            kbomb = false;
         }
 
+        /*
         if (kshoot)
             if (zero.ams > 0) {
 
@@ -618,8 +621,10 @@ public class PearlHarborScene extends Scene implements Runnable {
                 drawSprite(pltmp, dispx, (int) zero.y, -1);
         }
 
-        /*
+
         calcBombs();
+
+        /*
         calcAmmos();
         */
 
@@ -1069,6 +1074,75 @@ public class PearlHarborScene extends Scene implements Runnable {
 
     }
     */
+
+    private void calcBombs() {
+
+        List<Bomb> expiredBombs = new ArrayList<Bomb>();
+
+        for (Bomb b: bombs) {
+
+            b.vy += 0.10000000000000001D;
+            if(zero.vx > 0.0D)
+            {
+                if(b.vx > 0.0D)
+                    b.vx -= 0.050000000000000003D;
+            } else
+            if(b.vx < 0.0D)
+                b.vx += 0.050000000000000003D;
+            b.x += b.vx;
+            b.y += b.vy;
+            boolean hit = false;
+            for (Target t: targs) {
+
+                if(!t.isHit(b) || t.status != -1)
+                    continue;
+
+                hit = true;
+
+                t.d++;
+                if (t.att == 0)
+                    t.att = 20;
+
+                double df = t.md / 3;
+                if ((double)(t.fp + 1) * df <= (double)t.d) {
+                    t.fs[t.fp] = (int)((320D + b.x) - t.x);
+                    t.fp++;
+                    //if(expl != null)
+                    //    expl.play();
+                }
+
+                if (t.d > t.md) {
+                    t.status = 0;
+                    points += t.val;
+                }
+
+                break;
+
+            }
+
+            if (b.y > 260D) {
+                SplashSurface ss = new SplashSurface(30, 30, (int)b.x + 320, 230, 50, 20, 0.5D);
+                ss.setTransparentColor(0);
+                splashes.add(ss);
+                //if(splash != null)
+                //    splash.play();
+            }
+
+            if (b.y > 260D || hit) {
+                expiredBombs.add(b);
+            } else if (b.y > 0.0D && dispx + ((int)b.x - (int)zero.x) > 0 && b.y < 350D && dispx + ((int)b.x - (int)zero.x) < 640) {
+                int bx = dispx - (int)(zero.x - b.x);
+                putPixel(0xff000000, bx, (int)b.y);
+                putPixel(0xff000000, bx + 1, (int)b.y);
+                putPixel(0xff000000, bx, (int)b.y + 1);
+                putPixel(0xff000000, bx + 1, (int)b.y + 1);
+            }
+
+        }
+
+        bombs.removeAll(expiredBombs);
+
+    }
 
     private void test() {
 

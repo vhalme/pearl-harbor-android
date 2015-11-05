@@ -13,6 +13,10 @@ public abstract class ScreenGraphics extends ScreenBuffer {
         super(context);
     }
 
+    public void putPixel(int color, int x, int y) {
+        pixels[y * 640 + x] = color;
+    }
+
     public void drawSprite(Sprite s, int x, int y) {
         drawSprite(s, x, y, -1);
     }
