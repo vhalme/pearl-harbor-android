@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.PixelFormat;
 import android.util.DisplayMetrics;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -38,6 +39,7 @@ public abstract class ScreenBuffer extends SurfaceView implements SurfaceHolder.
         }
 
         bitmap.setDensity(DisplayMetrics.DENSITY_HIGH);
+        getHolder().setFormat(PixelFormat.RGBA_8888);
         getHolder().addCallback(this);
 
     }

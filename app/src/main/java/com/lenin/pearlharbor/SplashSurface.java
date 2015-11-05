@@ -1,5 +1,7 @@
 package com.lenin.pearlharbor;
 
+import android.graphics.Color;
+
 import gfx.graphics.Surface;
 
 import java.util.ArrayList;
@@ -60,6 +62,8 @@ public class SplashSurface extends Surface {
         this.sy = sy;
         this.maxage = maxage;
         this.f = f;
+        setTransparentColor(0);
+        clear(0);
         particles = new ArrayList<Particle>();
         expiredParticles = new ArrayList<Particle>();
         for (int i = 0; i < ps; i++)
@@ -69,7 +73,7 @@ public class SplashSurface extends Surface {
         int c = 255;
         double dc = 255D / (double)maxage;
         for (int i = 0; i < maxage; i++) {
-            palette[i] = 0xffffff;
+            palette[i] = 0xffffffff;
             c = (int)((double)c - dc);
         }
 
@@ -84,10 +88,10 @@ public class SplashSurface extends Surface {
 
             if (p.move()) {
                 int pos = (int)p.y * super.width + (int)p.x;
-                super.pixels[pos] = palette[p.age];
-                super.pixels[pos + 1] = palette[p.age];
-                super.pixels[pos + super.width] = palette[p.age];
-                super.pixels[pos + super.width + 1] = palette[p.age];
+                pixels[pos] = palette[p.age];
+                pixels[pos + 1] = palette[p.age];
+                pixels[pos + super.width] = palette[p.age];
+                pixels[pos + super.width + 1] = palette[p.age];
             } else {
                 expiredParticles.add(p);
             }

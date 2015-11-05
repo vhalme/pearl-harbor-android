@@ -394,7 +394,7 @@ public class PearlHarborScene extends Scene implements Runnable {
 
             if (zero.status < 3) {
                 zero.status = 4;
-                SplashSurface ss = new SplashSurface(150, 100, (int)(zero.x + 320D), 160, 500, 100, 1.0D);
+                SplashSurface ss = new SplashSurface(150, 100, (int)(zero.x + 320D - 50), 160, 500, 100, 1.0D);
                 ss.setTransparentColor(0);
                 splashes.add(ss);
                 System.out.println("added splash: " + splashes.size());
@@ -520,11 +520,11 @@ public class PearlHarborScene extends Scene implements Runnable {
 
             if (ss.splash()) {
 
-                if (((Surface)(ss)).width != 30) {
-                    tmpsurf3.fetchPixels(screen.getPixels(), 640, (int) ((double) ss.sx - zero.x), ss.sy);
-                    tmpsurf3.draw(ss, 0, 0, ((Surface) (ss)).width, ((Surface) (ss)).height, false, 0);
+                if (ss.width != 30) {
+                    tmpsurf3.fetchPixels(screen.getPixels(), 640, (int)((double)ss.sx - zero.x), ss.sy);
+                    tmpsurf3.draw(ss, 0, 0, ss.width, ss.height, false, 0);
                     tmpsurf3.blur();
-                    screen.draw(ss, (int) ((double) ss.sx - zero.x), ss.sy, ((Surface) (tmpsurf3)).width, ((Surface) (tmpsurf3)).height, false, 0);
+                    screen.draw(tmpsurf3, (int)((double)ss.sx - zero.x), ss.sy, tmpsurf3.width, tmpsurf3.height, false, 0);
                 } else {
                     blur.fetchPixels(screen.getPixels(), 640, (int) ((double) ss.sx - zero.x), ss.sy);
                     blur.draw(ss, 0, 0, ((Surface) (ss)).width, ((Surface) (ss)).height, false, 0);
@@ -1016,6 +1016,14 @@ public class PearlHarborScene extends Scene implements Runnable {
     */
 
     private void test() {
+
+        int pixel = Color.GRAY;
+        int a = (pixel >> 24) & 0xff;
+        int r = (pixel >> 16) & 0xff;
+        int g = (pixel >> 8) & 0xff;
+        int b = pixel & 0xff;
+        int repacked = a << 24 | r << 16 | g << 8 | b;
+        System.out.println(pixel + " => " + a+","+r+","+g+","+b + " => " + repacked);
 
         SplashSurface ss = new SplashSurface(150, 100, (int)(zero.x + 320D), 160, 500, 100, 1.0D);
         //ss.setTransparentColor(0);
