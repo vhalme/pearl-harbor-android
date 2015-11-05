@@ -57,6 +57,7 @@ public class PearlHarborScene extends Scene implements Runnable {
     BlurSurface tmpsurf3;
     BlurSurface blur;
     WaterSurface water;
+    FireSurface[] fires;
     Surface screen;
 
     boolean kshoot;
@@ -290,6 +291,20 @@ public class PearlHarborScene extends Scene implements Runnable {
         carriers[3] = new Sprite(Bitmap.createScaledBitmap(bmp, 135, 40, false));
         carriers[3].setTransparentColor(carriers[3].getPixels()[0]);
 
+        fires = new FireSurface[3];
+        bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.coolmap0);
+        Sprite cm0 = new Sprite(Bitmap.createScaledBitmap(bmp, 50, 100, false));
+        bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.coolmap1);
+        Sprite cm1 = new Sprite(Bitmap.createScaledBitmap(bmp, 50, 100, false));
+        bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.coolmap2);
+        Sprite cm2 = new Sprite(Bitmap.createScaledBitmap(bmp, 50, 100, false));
+        fires[0] = new FireSurface(50, 100, cm0.getPixels(), true, 20, 90, 10, 10);
+        fires[1] = new FireSurface(50, 100, cm1.getPixels(), true, 20, 90, 10, 10);
+        fires[2] = new FireSurface(50, 100, cm2.getPixels(), true, 20, 90, 10, 10);
+        fires[0].setTransparentColor(fires[0].getPixels()[0]);
+        fires[1].setTransparentColor(fires[0].getPixels()[0]);
+        fires[2].setTransparentColor(fires[0].getPixels()[0]);
+
         Bitmap bgBmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.bg);
         bgBmp = Bitmap.createScaledBitmap(bgBmp, 640, 350, false);
 
@@ -473,11 +488,9 @@ public class PearlHarborScene extends Scene implements Runnable {
 
         pos = - (int)zero.x;
 
-        /*
         fires[0].burn();
         fires[1].burn();
         fires[2].burn();
-        */
 
         List<Target> expiredTargets = new ArrayList<Target>();
         List<Carrier> expiredCarriers = new ArrayList<Carrier>();
@@ -515,21 +528,22 @@ public class PearlHarborScene extends Scene implements Runnable {
                         apst = -1;
                     }
 
-                    expiredCarriers.add((Carrier)t);
-                    //cars.removeElement(t);
+                    if (t instanceof Carrier) {
+                        expiredCarriers.add((Carrier) t);
+                    }
 
                 } else {
 
                     drawSprite(t.pic[t.fp], (int) (t.x - zero.x), sinkf - 10);
 
-                    //int i = 0;
-                    //while (i < 3) {
+                    int i = 0;
+                    while (i < 3) {
 
-                        //if (t.fs[i] != -1)
-                        //    screen.draw(fires[i], ((int) (t.x - zero.x) + t.fs[i]) - 20, sinkf - 77, 50, 100, false, 0);
-                        //i++;
+                        if (t.fs[i] != -1)
+                            screen.draw(fires[i], ((int) (t.x - zero.x) + t.fs[i]) - 20, sinkf - 77, 50, 100, false, 0);
+                        i++;
 
-                    //}
+                    }
 
                 }
 
