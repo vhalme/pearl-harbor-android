@@ -6,11 +6,13 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 
 import java.util.ArrayList;
@@ -25,6 +27,11 @@ import gfx.scene.Scene;
  */
 public class PearlHarborScene extends Scene implements Runnable {
 
+    private long fpsStart = System.currentTimeMillis();
+    private int fpsCount = 0;
+    private int fps;
+
+    private long lastPass = System.currentTimeMillis();
     private Thread thread;
     private SurfaceHolder holder;
     private boolean keepRunning = false;
@@ -45,6 +52,7 @@ public class PearlHarborScene extends Scene implements Runnable {
     Sprite blimb;
     Sprite ground;
     Sprite ctrl0;
+    Surface ctrl0s;
     Sprite spmap;
     Surface[] clouds0r;
     Surface smoke;
@@ -112,7 +120,7 @@ public class PearlHarborScene extends Scene implements Runnable {
         holder = getHolder();
 
         pos = 0;
-        blimby = 0.0D;
+        blimby = 0.0d;
         dispx = 320;
 
     }
@@ -174,6 +182,41 @@ public class PearlHarborScene extends Scene implements Runnable {
 
     }
 
+    @Override
+    public boolean onTouchEvent(MotionEvent me) {
+
+        float tx = me.getX();
+        float ty = me.getY();
+
+        switch (me.getAction()) {
+
+            case MotionEvent.ACTION_DOWN:
+
+                if (tx > 540 * scale) {
+                    if (ty < 175 * scale) {
+                        kshoot = true;
+                    } else {
+                        kbomb = true;
+                    }
+                }
+
+                break;
+
+            case MotionEvent.ACTION_UP:
+
+                if (zero.status <= 5)
+                    break;
+
+                points = 0;
+                time = System.currentTimeMillis();
+                startGame();
+
+        }
+
+        return true;
+
+    }
+
     public void run() {
 
         loadStuff();
@@ -189,24 +232,38 @@ public class PearlHarborScene extends Scene implements Runnable {
         lfire = new FireSurface(257, 150, l2cool[0].getPixels(), true, 10, 148, 230, 2);
         ammos2 = new ArrayList<Bomb>();
 
-        Canvas canvas = null;
         while (keepRunning) {
 
-            canvas = holder.lockCanvas();
+            Canvas canvas = holder.lockCanvas();
             if (canvas != null) {
 
                 doGameFrame();
                 doDraw(canvas);
 
-                try {
-                    thread.sleep(10L);
-                } catch(InterruptedException ie) {
-                    ie.printStackTrace();
+                long now = System.currentTimeMillis();
+                long sleepTime = now - lastPass;
+                lastPass = now;
+
+                if (now - fpsStart > 1000) {
+                    fpsStart = now;
+                    fps = fpsCount;
+                    fpsCount = 0;
+                }
+
+                fpsCount++;
+
+                if (sleepTime < 33) {
+                    try {
+                        thread.sleep(sleepTime);
+                    } catch(InterruptedException ie) {
+                        ie.printStackTrace();
+                    }
                 }
 
                 holder.unlockCanvasAndPost(canvas);
 
             }
+
         }
 
     }
@@ -232,6 +289,7 @@ public class PearlHarborScene extends Scene implements Runnable {
         bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.mittarit2);
         ctrl0 = new Sprite(Bitmap.createScaledBitmap(bmp, 200, 80, false));
         ctrl0.setAlphaBlended(true);
+        ctrl0s = new Surface(ctrl0.getPixels(), ctrl0.getWidth(), ctrl0.getHeight());
 
         bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.blimb);
         blimb = new Sprite(Bitmap.createScaledBitmap(bmp, 108, 100, false));
@@ -374,6 +432,15 @@ public class PearlHarborScene extends Scene implements Runnable {
 
     private void startGame() {
 
+        time = System.currentTimeMillis();
+        nickname = "";
+        points = 0;
+        //clevel = 0;
+        keepRunning = true;
+        zero = new Zero();
+        //fps = new FPSCounter(10);
+        initLevel(0);
+
     }
 
     private void initLevel(int level) {
@@ -443,14 +510,8 @@ public class PearlHarborScene extends Scene implements Runnable {
 
     }
 
-    private void doGameFrame() {
+    private void adjustVectorByKeys() {
 
-        blimby += 0.050000000000000003D;
-
-        if (blimby > 6.2800000000000002D)
-            blimby = 0.0D;
-
-        //if (mValuesOrientation[0] > -2.5 && zero.vx > -15D && zero.status != 1 && zero.fuel > 0) {
         if (kleft && zero.vx > -15D && zero.status != 1 && zero.fuel > 0) {
 
             if (zero.dvy == 0.0D)
@@ -462,7 +523,6 @@ public class PearlHarborScene extends Scene implements Runnable {
 
         }
 
-        //if (mValuesOrientation[2] > -0.8 && zero.vy > -4D && zero.status != 1 && zero.fuel > 0) {
         if (kup && zero.vy > -4D && zero.status != 1 && zero.fuel > 0) {
 
             if (zero.dvy == 0.0D)
@@ -475,7 +535,6 @@ public class PearlHarborScene extends Scene implements Runnable {
 
         }
 
-        //if (mValuesOrientation[0] < -2.5 && zero.vx < 15D && zero.status != 1 && zero.fuel > 0) {
         if (kright && zero.vx < 15D && zero.status != 1 && zero.fuel > 0) {
 
             if (zero.dvy == 0.0D)
@@ -487,7 +546,6 @@ public class PearlHarborScene extends Scene implements Runnable {
 
         }
 
-        //if (mValuesOrientation[2] < -0.8 && zero.status != 1) {
         if (kdown && zero.status != 1) {
 
             if (zero.dvy == 0.0D)
@@ -500,6 +558,70 @@ public class PearlHarborScene extends Scene implements Runnable {
 
         }
 
+
+    }
+
+
+    private void adjustVectorByTilting() {
+
+        if (mValuesOrientation[1] > 0.1 && zero.vx > -15D && zero.status != 1 && zero.fuel > 0) {
+
+            if (zero.dvy == 0.0d)
+                zero.vx -= 0.4d;
+            else
+                zero.vx -= 0.2d;
+
+            kleft = false;
+
+        }
+
+        if (mValuesOrientation[2] > -0.75 && zero.vy > -4D && zero.status != 1 && zero.fuel > 0) {
+
+            if (zero.dvy == 0.0D)
+                zero.vy -= 0.4d;
+            else
+                zero.vy -= 0.2d;
+
+            zero.pos = 1;
+            kup = false;
+
+        }
+
+        if (mValuesOrientation[1] < -0.1 && zero.vx < 15D && zero.status != 1 && zero.fuel > 0) {
+
+            if (zero.dvy == 0.0D)
+                zero.vx += 0.4d;
+            else
+                zero.vx += 0.2d;
+
+            kright = false;
+
+        }
+
+        if (mValuesOrientation[2] < -0.82 && zero.status != 1) {
+
+            if (zero.dvy == 0.0D)
+                zero.vy += 0.4d;
+            else
+                zero.vx += 0.2d;
+
+            zero.pos = 2;
+            kdown = false;
+
+        }
+
+
+    }
+
+
+    private void doGameFrame() {
+
+        blimby += 0.050000000000000003D;
+
+        if (blimby > 6.2800000000000002D)
+            blimby = 0.0D;
+
+        adjustVectorByTilting();
 
         if (kbomb && zero.bs > 0) {
             System.out.println("drop bomb");
@@ -534,14 +656,13 @@ public class PearlHarborScene extends Scene implements Runnable {
         for (int i = 0; i < 120; i++)
             map.putPixel(5 + i, 55, 200);
 
-        /*
         if (zero.status == -1 || zero.status == 0) {
 
             zero.fuel--;
-            if (zero.fuel == lfs0 && lfa != null)
-                lfa.play();
-            if (zero.fuel == lfs1 && lfa != null)
-                lfa.play();
+            //if (zero.fuel == lfs0 && lfa != null)
+            //    lfa.play();
+            //if (zero.fuel == lfs1 && lfa != null)
+            //    lfa.play();
 
         }
 
@@ -552,7 +673,6 @@ public class PearlHarborScene extends Scene implements Runnable {
             else
                 zero.vx += 0.01D;
 
-        */
 
         if (zero.y > 243D) {
 
@@ -723,9 +843,9 @@ public class PearlHarborScene extends Scene implements Runnable {
         if (zero.status < 3) {
             Utils.rotate(inc, plane0.getPixels(), pltmp.getPixels(), 35);
             if (zero.vx > 0.0D)
-                drawSprite(pltmp, dispx, (int) zero.y, 0);
+                drawSprite(pltmp, dispx, (int)zero.y, 0);
             else
-                drawSprite(pltmp, dispx, (int) zero.y, -1);
+                drawSprite(pltmp, dispx, (int)zero.y, -1);
         }
 
 
@@ -885,7 +1005,7 @@ public class PearlHarborScene extends Scene implements Runnable {
             zero.y--;
         }
 
-        drawSprite(ctrl0, 10, 10);
+        screen.draw(ctrl0s, 10, 10, 200, 80, true, 0);
         if (zero.status > 5) {
             if (zero.status < 7) {
                 lfire = new FireSurface(257, 150, l2cool[6].getPixels(), true, 2, 148, 246, 2);
@@ -898,134 +1018,194 @@ public class PearlHarborScene extends Scene implements Runnable {
         /*
         update(getPixels());
 
-        if (zero.status > 10) {
 
-            String s1 = "Score: " + points;
-            String s2 = "GAME OVER!";
-            String s3 = "ENTER to submit score & start over.";
-            nickname = pnick;
-            getGraphicsBuffer().setColor(Color.white);
-            FontMetrics fm = getGraphicsBuffer().getFontMetrics(getGraphicsBuffer().getFont());
-            getGraphicsBuffer().drawString(s1, 350 - fm.stringWidth(s1) / 2, 100);
-            getGraphicsBuffer().drawString(s2, 350 - fm.stringWidth(s2) / 2, 150);
-            getGraphicsBuffer().drawString(s3, 350 - fm.stringWidth(s3) / 2, 170);
-
-        }
-
-        Amplane a;
-        for (enum=ampls.elements();
-        enum.hasMoreElements();
-        drawStatus(a))
-        a = (Amplane) enum.nextElement();
-
-        enum=targs.elements();
-        do {
-
-            if (! enum.hasMoreElements())
-            break;
-
-            Target a = (Target) enum.nextElement();
-            drawStatus(a);
-            if (tarmed)
-                if (zero.vx > 0.0D) {
-
-                    if ((int) (a.x - zero.x - 320D) < 250 && (int) (a.x - zero.x - 320D) >= 0) {
-                        getGraphicsBuffer().setColor(Color.yellow);
-                        getGraphicsBuffer().drawLine(330, (int) zero.y + 20, (int) (a.x - zero.x) + 20, (int) a.y + 10);
-                    }
-
-                } else if ((int) (a.x - zero.x - 320D) > -250 && (int) (a.x - zero.x - 320D) <= 0) {
-                    getGraphicsBuffer().setColor(Color.yellow);
-                    getGraphicsBuffer().drawLine(330, (int) zero.y + 20, (int) (a.x - zero.x) + 20, (int) a.y + 10);
-                }
-
-        } while (true);
-
-        getGraphicsBuffer().setFont(fsmall);
-        getGraphicsBuffer().setColor(Color.white);
-        double av = Math.sqrt(zero.vx * zero.vx + (zero.vy + zero.dvy) * (zero.vy + zero.dvy)) * 30D;
-        getGraphicsBuffer().drawString("" + (int) av, 28, 46);
-
-        if (zero.fuel < lfs0)
-            getGraphicsBuffer().setColor(Color.red);
-        getGraphicsBuffer().drawString("" + zero.fuel, 80, 46);
-        if (zero.fuel < lfs0)
-            getGraphicsBuffer().setColor(Color.white);
-        getGraphicsBuffer().drawString("" + (int) Math.abs(zero.y - 245D), 55, 77);
-        getGraphicsBuffer().drawString("" + zero.bs, 140, 57);
-        getGraphicsBuffer().drawString("" + zero.ams, 157, 57);
-        getGraphicsBuffer().drawString("" + (zero.mhits - zero.hits), 180, 57);
-        getGraphicsBuffer().drawString("" + points, 165, 75);
-        if (zero.fuel < lfs1) {
-            getGraphicsBuffer().setColor(Color.red);
-            getGraphicsBuffer().drawString("FUEL LOW!", 300, 100);
-        }
-        getGraphicsBuffer().setFont(fnorm);
-        getGraphicsBuffer().setColor(Color.red);
-        double arxsin = Math.sin(3D + 0.0074999999999999997D * av);
-        double arxcos = Math.cos(3D + 0.0074999999999999997D * av);
-        int arx = (int) (arxsin * 11D);
-        int ary = (int) (arxcos * 11D);
-        getGraphicsBuffer().drawLine(34, 36, 34 + ary, 36 + arx);
-        arxsin = Math.sin(3D + 0.0011999999999999999D * (double) zero.fuel);
-        arxcos = Math.cos(3D + 0.0011999999999999999D * (double) zero.fuel);
-        arx = (int) (arxsin * 11D);
-        ary = (int) (arxcos * 11D);
-        getGraphicsBuffer().drawLine(90, 36, 90 + ary, 36 + arx);
-        arxsin = Math.sin(3D + 0.012244897959183673D * Math.abs(zero.y - 245D));
-        arxcos = Math.cos(3D + 0.012244897959183673D * Math.abs(zero.y - 245D));
-        arx = (int) (arxsin * 11D);
-        ary = (int) (arxcos * 11D);
-        getGraphicsBuffer().drawLine(61, 67, 61 + ary, 67 + arx);
-        ary = (int) (0.44D * (double) zero.bs);
-        getGraphicsBuffer().drawLine(144, 45 - ary, 147, 45 - ary);
-        ary = (int) (0.11D * (double) zero.ams);
-        getGraphicsBuffer().drawLine(164, 45 - ary, 167, 45 - ary);
-        ary = (int) (1.1000000000000001D * (double) (zero.mhits - zero.hits));
-        if (ary < 0)
-            ary = 0;
-        getGraphicsBuffer().drawLine(184, 45 - ary, 187, 45 - ary);
-        if (apst > -1)
-            if (appdist != 1000) {
-                getGraphicsBuffer().setColor(Color.red);
-                getGraphicsBuffer().drawString("" + appdist, 263, 48);
-            } else {
-                getGraphicsBuffer().setColor(Color.green);
-                getGraphicsBuffer().drawString("OK", 263, 48);
-            }
-        if (apst > 0) {
-            xsp = (int) Math.abs(zero.vx * 30D);
-            ysp = (int) Math.abs((zero.vy + zero.dvy) * 30D);
-            if (xsp < 150) {
-                getGraphicsBuffer().setColor(Color.green);
-                getGraphicsBuffer().drawString("OK", 295, 48);
-            } else {
-                getGraphicsBuffer().setColor(Color.red);
-                getGraphicsBuffer().drawString("" + xsp, 295, 48);
-            }
-            if (ysp < 60) {
-                getGraphicsBuffer().setColor(Color.green);
-                getGraphicsBuffer().drawString("OK", 330, 48);
-            } else {
-                getGraphicsBuffer().setColor(Color.red);
-                getGraphicsBuffer().drawString("" + ysp, 330, 48);
-            }
-            if (xsp < 150 && ysp < 60)
-                if (zero.y < 230D) {
-                    getGraphicsBuffer().setColor(Color.red);
-                    getGraphicsBuffer().drawString("" + (int) (230D - zero.y), 355, 48);
-                } else if (zero.y < 232.09999999999999D) {
-                    getGraphicsBuffer().setColor(Color.green);
-                    getGraphicsBuffer().drawString("OK", 355, 48);
-                }
-        }
-
-        repaint();
         */
+
+
 
     }
 
     private void doGameAlku() {
+
+    }
+
+    private void drawStatus(Target a, Canvas canvas) {
+
+        if (Math.abs(a.x - zero.x) > 640) {
+            return;
+        }
+
+        float slice = (float)(a.pic[0].getWidth() - 1) / (float)a.md;
+        float per3 = (float)a.md / 3f;
+
+        float pitch = a.pic[0].getWidth() > 35 ? 30 * scale : 9 * scale;
+        float statusx = (float)((a.x - zero.x)) * scale;
+        float statusy = (float)(a.y - pitch) * scale;
+        float statusw = a.pic[0].getWidth() * scale;
+        float statush = 6f * scale;
+
+        if (a.att > 0) {
+            //if (a.x > zero.x && a.x < zero.x + 640D) {
+
+            if ((float)a.d <= per3)
+                paint.setColor(Color.GREEN);
+            else if((float)a.d > per3 && (float)a.d <= per3 * 2f)
+                paint.setColor(Color.YELLOW);
+            else if ((float)a.d > per3 * 2f && (float)a.d <= per3 * 3f)
+                paint.setColor(Color.RED);
+
+            statusw = statusw * (1f - ((float)a.d / (float)a.md));
+
+            if (a.d <= a.md) {
+                paint.setStyle(Paint.Style.FILL);
+                canvas.drawRect(statusx, statusy, statusx + statusw, statusy + statush, paint);
+                paint.setColor(Color.BLACK);
+                paint.setStyle(Paint.Style.STROKE);
+                canvas.drawRect(statusx - 1f, statusy - 1f, statusx + statusw + 2f, statusy + statush + 2, paint);
+            }
+
+            //}
+
+            a.att--;
+
+        }
+
+    }
+
+    @Override
+    protected void drawToCanvas(Canvas canvas) {
+
+        for (Amplane a: ampls) {
+            drawStatus(a, canvas);
+        }
+
+        for (Target t: targs) {
+
+            drawStatus(t, canvas);
+
+            if (tarmed) {
+
+                if (zero.vx > 0.0D) {
+
+                    if ((int)(t.x - zero.x - 320d) < 250 && (int)(t.x - zero.x - 320d) >= 0) {
+                        paint.setColor(Color.YELLOW);
+                        canvas.drawLine(330 * scale, (float)(zero.y + 20) * scale, (float)((t.x - zero.x) + 20) * scale, (float)(t.y + 10) * scale, paint);
+                    }
+
+                } else if ((int)(t.x - zero.x - 320d) > -250 && (int)(t.x - zero.x - 320d) <= 0) {
+                    paint.setColor(Color.YELLOW);
+                    canvas.drawLine(330 * scale, (float)(zero.y + 20) * scale, (float)((t.x - zero.x) + 20) * scale, (float)(t.y + 10) * scale, paint);
+                }
+
+            }
+
+        }
+
+        paint.setTextSize(9 * scale);
+        paint.setColor(Color.WHITE);
+        double av = Math.sqrt(zero.vx * zero.vx + (zero.vy + zero.dvy) * (zero.vy + zero.dvy)) * 30d;
+        canvas.drawText("" + (int) av, 28 * scale, 46 * scale, paint);
+
+        if (zero.fuel < lfs0)
+            paint.setColor(Color.RED);
+        canvas.drawText("" + zero.fuel, 80 * scale, 46 * scale, paint);
+
+        if (zero.fuel < lfs0)
+            paint.setColor(Color.WHITE);
+
+        canvas.drawText("" + (int) Math.abs(zero.y - 245D), 55 * scale, 77 * scale, paint);
+        canvas.drawText("" + zero.bs, 140 * scale, 57 * scale, paint);
+        canvas.drawText("" + zero.ams, 157 * scale, 57 * scale, paint);
+        canvas.drawText("" + (zero.mhits - zero.hits), 180 * scale, 57 * scale, paint);
+        canvas.drawText("" + points, 165 * scale, 75 * scale, paint);
+        if (zero.fuel < lfs1) {
+            paint.setColor(Color.RED);
+            canvas.drawText("FUEL LOW!", 300 * scale, 100 * scale, paint);
+        }
+
+        paint.setTextSize(12 * scale);
+        paint.setColor(Color.RED);
+        double arxsin = Math.sin(3d + 0.0074999999999999997D * av);
+        double arxcos = Math.cos(3d + 0.0074999999999999997D * av);
+        int arx = (int)(arxsin * (11d * scale));
+        int ary = (int)(arxcos * (11d * scale));
+        canvas.drawLine(34 * scale, 36 * scale, (34 * scale) + ary, (36 * scale) + arx, paint);
+        arxsin = Math.sin(3D + 0.0011999999999999999D * (double)zero.fuel);
+        arxcos = Math.cos(3D + 0.0011999999999999999D * (double)zero.fuel);
+        arx = (int)(arxsin * (11d * scale));
+        ary = (int)(arxcos * (11d * scale));
+        canvas.drawLine(90 * scale, 36 * scale, (90 * scale) + ary, (36 * scale) + arx, paint);
+        arxsin = Math.sin(3d + 0.012244897959183673D * Math.abs(zero.y - 245D));
+        arxcos = Math.cos(3d + 0.012244897959183673D * Math.abs(zero.y - 245D));
+        arx = (int) (arxsin * (11d * scale));
+        ary = (int) (arxcos * (11d * scale));
+        canvas.drawLine(61 * scale, 67 * scale, (61 * scale) + ary, (67 * scale) + arx, paint);
+        ary = (int) (0.44d * (double) zero.bs);
+        canvas.drawLine(144 * scale, (45 * scale) - ary, 147 * scale, (45 * scale) - ary, paint);
+        ary = (int) (0.11d * (double) zero.ams);
+        canvas.drawLine(164 * scale, (45 * scale) - ary, 167 * scale, (45 * scale) - ary, paint);
+        ary = (int) (1.1000000000000001D * (double)(zero.mhits - zero.hits));
+        if (ary < 0)
+            ary = 0;
+        canvas.drawLine(184 * scale, (45 * scale) - ary, 187 * scale, (45 * scale) - ary, paint);
+
+        if (apst > -1)
+            if (appdist != 1000) {
+                paint.setColor(Color.RED);
+                canvas.drawText("" + appdist, 263 * scale, 48 * scale, paint);
+            } else {
+                paint.setColor(Color.GREEN);
+                canvas.drawText("OK", 263 * scale, 48 * scale, paint);
+            }
+
+        if (apst > 0) {
+
+            xsp = (int) Math.abs(zero.vx * 30D);
+            ysp = (int) Math.abs((zero.vy + zero.dvy) * 30D);
+
+            if (xsp < 150) {
+                paint.setColor(Color.GREEN);
+                canvas.drawText("OK", 295 * scale, 48 * scale, paint);
+            } else {
+                paint.setColor(Color.RED);
+                canvas.drawText("" + xsp, 295 * scale, 48 * scale, paint);
+            }
+            if (ysp < 60) {
+                paint.setColor(Color.GREEN);
+                canvas.drawText("OK", 330 * scale, 48 * scale, paint);
+            } else {
+                paint.setColor(Color.RED);
+                canvas.drawText("" + ysp, 330 * scale, 48 * scale, paint);
+            }
+
+            if (xsp < 150 && ysp < 60)
+                if (zero.y < 230D) {
+                    paint.setColor(Color.RED);
+                    canvas.drawText("" + (int)(230D - zero.y), 355 * scale, 48 * scale, paint);
+                } else if (zero.y < 232.09999999999999D) {
+                    paint.setColor(Color.GREEN);
+                    canvas.drawText("OK", 355 * scale, 48 * scale, paint);
+                }
+        }
+
+        if (zero.status > 10) {
+
+            String s1 = "Score: " + points;
+            String s2 = "GAME OVER!";
+            String s3 = "Tap anywhere to start over.";
+            nickname = "lenin_ra";
+            paint.setColor(Color.WHITE);
+            Rect textBounds1 = new Rect();
+            paint.getTextBounds(s1, 0, s1.length(), textBounds1);
+            Rect textBounds2 = new Rect();
+            paint.getTextBounds(s2, 0, s2.length(), textBounds2);
+            Rect textBounds3 = new Rect();
+            paint.getTextBounds(s3, 0, s3.length(), textBounds3);
+            canvas.drawText(s1, (350 * scale) - (textBounds1.width() / 2), 100 * scale, paint);
+            canvas.drawText(s2, (350 * scale) - (textBounds2.width() / 2), 150 * scale, paint);
+            canvas.drawText(s3, (350 * scale) - (textBounds3.width() / 2), 170 * scale, paint);
+
+        }
 
     }
 
@@ -1034,11 +1214,11 @@ public class PearlHarborScene extends Scene implements Runnable {
 
         super.doDraw(canvas);
 
-
-        paint.setStrokeWidth(3);
+        //paint.setStrokeWidth(3);
         paint.setTextSize(30);
         paint.setColor(Color.GREEN);
         canvas.drawText(test, 10, 355, paint);
+        canvas.drawText(fps + " fps", 10, 400, paint);
 
     }
 
@@ -1103,7 +1283,7 @@ public class PearlHarborScene extends Scene implements Runnable {
                     nickname = nickname.substring(0, nickname.length() - 1);
                 break;
 
-            case 10: // '\n'
+            case 66: // '\n'
                 if (zero.status <= 5)
                     break;
                 points = 0;
@@ -1187,32 +1367,29 @@ public class PearlHarborScene extends Scene implements Runnable {
             b.age++;
             boolean hit = false;
 
-            for (Amplane t: ampls) {
+            for (Amplane a: ampls) {
 
-                if(!t.isHit(b) || ((Target) (t)).status != -1)
+                if (!a.isHit(b) || a.status != -1)
                     continue;
 
                 hit = true;
-                if(((Target) (t)).att == 0)
-                    t.att = 20;
-                t.d++;
-                if(((Target) (t)).d >= ((Target) (t)).md)
-                {
-                    t.vy += 0.5D;
-                    if(((Target) (t)).d == ((Target) (t)).md)
-                    {
-                        points += ((Target) (t)).val;
-                        t.fp = 1;
+                if (a.att == 0)
+                    a.att = 20;
+                a.d++;
+                if (a.d >= a.md) {
+                    a.vy += 0.5D;
+                    if(a.d == a.md) {
+                        points += a.val;
+                        a.fp = 1;
                     }
                 }
                 break;
             }
 
             int bx = dispx - (int)(zero.x - b.x);
-            if(b.age > 100 || b.y > 260D || b.y < 0.0D || hit)
+            if (b.age > 100 || b.y > 260D || b.y < 0.0D || hit)
                 expiredAmmos.add(b);
-            else
-            if(bx > 0 && bx < 640 && b.type == -1)
+            else if (bx > 0 && bx < 640 && b.type == -1)
                 putPixel(0xffffff00, bx, (int)b.y);
 
         }
@@ -1436,7 +1613,7 @@ public class PearlHarborScene extends Scene implements Runnable {
     class Target {
 
         public boolean isHit(Bomb b) {
-            return b.x + 320D > x && b.x + 320D < x + w && b.y > y && b.y < y + h;
+            return b.x + 320d > x && b.x + 320d < x + w && b.y > y && b.y < y + h;
         }
 
         double x;
@@ -1529,32 +1706,34 @@ public class PearlHarborScene extends Scene implements Runnable {
 
         }
 
-        public Carrier(double x, double y, double w,
-                       double h, Sprite pic[])
-        {
+        public Carrier(double x, double y, double w, double h, Sprite pic[]) {
             super(x, y, w, h, pic);
             super.val = -500;
             super.md = 100;
         }
+
     }
 
     class Amplane extends Target {
 
         public void shoot() {
+
             sctr++;
-            if(sctr < 6)
-            {
+
+            if(sctr < 6) {
                 Bomb b;
                 if(vx > 0.0D)
-                    b = new Bomb(super.x + 31D, super.y + 5D, vx + 7D, vy);
+                    b = new Bomb(super.x + 34d, super.y + 5d, vx + 7d, vy);
                 else
-                    b = new Bomb(super.x - 1.0D, super.y + 5D, vx - 7D, vy);
+                    b = new Bomb(super.x - 2d, super.y + 5d, vx - 7d, vy);
                 b.type = 0;
                 fire.add(b);
                 ammos2.add(b);
             }
+
             if(sctr > 20)
                 sctr = 0;
+
         }
 
         public void checkAmmos() {

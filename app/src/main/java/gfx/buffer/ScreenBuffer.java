@@ -21,6 +21,7 @@ public abstract class ScreenBuffer extends SurfaceView implements SurfaceHolder.
     protected Context context;
     protected int displayWidth;
     protected int displayHeight;
+    protected float scale;
 
     public ScreenBuffer(Context context) {
 
@@ -44,6 +45,8 @@ public abstract class ScreenBuffer extends SurfaceView implements SurfaceHolder.
 
     }
 
+    protected abstract void drawToCanvas(Canvas canvas);
+
     public int[] getPixels() {
         return pixels;
     }
@@ -54,12 +57,12 @@ public abstract class ScreenBuffer extends SurfaceView implements SurfaceHolder.
 
     protected void doDraw(Canvas canvas) {
 
+        //canvas.drawColor(Color.WHITE);
         bitmap.setPixels(pixels, 0, 640, 0, 0, 640, 350);
-        //canvas.drawBitmap(bitmap, 0, 0, null);
-
         int bmpHeight = (int)Math.ceil(new Double(displayWidth).doubleValue() / 1.829);
         Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, displayWidth, bmpHeight, false);
         canvas.drawBitmap(scaledBitmap, 0, 0, null);
+        drawToCanvas(canvas);
 
     }
 
@@ -70,7 +73,9 @@ public abstract class ScreenBuffer extends SurfaceView implements SurfaceHolder.
         displayWidth = w;
         displayHeight = h;
 
-        System.out.println("size change: " + w + ", " + h + ", " + oldw + ", " + oldh);
+        scale = w / 640f;
+        System.out.println("size change: " + w + ", " + h + ", " + oldw + ", " + oldh + ", "+scale);
+
     }
 
 
