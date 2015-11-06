@@ -45,13 +45,17 @@ public class PearlHarborScene extends Scene implements Runnable {
     Sprite blimb;
     Sprite ground;
     Sprite ctrl0;
+    Sprite spmap;
     Surface[] clouds0r;
+    Surface smoke;
+    Surface map;
     Sprite[] ships;
     Sprite[] carriers;
     Sprite[] amplanes;
     Sprite[] l2cool;
     Sprite arrow0;
     List<Smoke> clouds;
+    List<Smoke> smokes;
     List<SplashSurface> splashes, expiredSplashes;
     List<Bomb> bombs;
     List<Bomb> ammos;
@@ -60,6 +64,7 @@ public class PearlHarborScene extends Scene implements Runnable {
     List<Carrier> cars;
     List<Amplane> ampls;
     Surface tmpsurf;
+    BlurSurface tmpsurf2;
     BlurSurface tmpsurf3;
     BlurSurface blur;
     WaterSurface water;
@@ -90,6 +95,8 @@ public class PearlHarborScene extends Scene implements Runnable {
     int blink;
     int dispx;
     int appdist;
+    double mapfx;
+    double mapfy;
     double blimby;
     long time;
 
@@ -173,7 +180,9 @@ public class PearlHarborScene extends Scene implements Runnable {
         initLevel(0);
 
         screen = new Surface(getPixels(), 640, 350);
+        map = new Surface(130, 70);
         tmpsurf = new Surface(640, 90);
+        tmpsurf2 = new BlurSurface(30, 30);
         tmpsurf3 = new BlurSurface(150, 100);
         blur = new BlurSurface(30, 30);
         water = new WaterSurface(640, 90);
@@ -225,15 +234,23 @@ public class PearlHarborScene extends Scene implements Runnable {
         ctrl0.setAlphaBlended(true);
 
         bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.blimb);
-        bmp = Bitmap.createScaledBitmap(bmp, 108, 100, false);
-        blimb = new Sprite(bmp);
+        blimb = new Sprite(Bitmap.createScaledBitmap(bmp, 108, 100, false));
         blimb.setTransparentColor(blimb.getPixels()[0]);
+
+        bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.kartta);
+        spmap = new Sprite(Bitmap.createScaledBitmap(bmp, 130, 70, false));
 
         bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.sea);
         ground = new Sprite(Bitmap.createScaledBitmap(bmp, 640, 90, false));
 
         bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.arrow0);
         arrow0 = new Sprite(Bitmap.createScaledBitmap(bmp, 10, 10, false));
+
+        bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.smoke0);
+        Sprite spsmoke = new Sprite(Bitmap.createScaledBitmap(bmp, 10, 10, false));
+        smoke = new Surface(spsmoke.getPixels(), spsmoke.getWidth(), spsmoke.getHeight());
+        smoke.setTransparentColor(smoke.getPixels()[0]);
+        smoke.setAlphaBlending(0.80000000000000004D);
 
         clouds0r = new Surface[5];
         bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.pilvi);
@@ -374,6 +391,7 @@ public class PearlHarborScene extends Scene implements Runnable {
         appr = false;
         zero = new Zero();
         clouds = new ArrayList<Smoke>();
+        smokes = new ArrayList<Smoke>();
         bombs = new ArrayList<Bomb>();
         ammos = new ArrayList<Bomb>();
         targs = new ArrayList<Target>();
@@ -420,6 +438,9 @@ public class PearlHarborScene extends Scene implements Runnable {
             }
         }
 
+        mapfx = 120D / (double)mwidth;
+        mapfy = 0.17142857142857143D;
+
     }
 
     private void doGameFrame() {
@@ -429,36 +450,54 @@ public class PearlHarborScene extends Scene implements Runnable {
         if (blimby > 6.2800000000000002D)
             blimby = 0.0D;
 
-        //if (mValuesOrientation[0] > -2.5 && zero.vx > -15D && zero.status != 1 && zero.fuel > 0)
-        if (kleft && zero.vx > -15D && zero.status != 1 && zero.fuel > 0)
+        //if (mValuesOrientation[0] > -2.5 && zero.vx > -15D && zero.status != 1 && zero.fuel > 0) {
+        if (kleft && zero.vx > -15D && zero.status != 1 && zero.fuel > 0) {
+
             if (zero.dvy == 0.0D)
                 zero.vx -= 0.40000000000000002D;
             else
                 zero.vx -= 0.20000000000000001D;
 
+            kleft = false;
+
+        }
+
         //if (mValuesOrientation[2] > -0.8 && zero.vy > -4D && zero.status != 1 && zero.fuel > 0) {
         if (kup && zero.vy > -4D && zero.status != 1 && zero.fuel > 0) {
+
             if (zero.dvy == 0.0D)
                 zero.vy -= 0.40000000000000002D;
             else
                 zero.vy -= 0.20000000000000001D;
+
             zero.pos = 1;
+            kup = false;
+
         }
 
-        //if (mValuesOrientation[0] < -2.5 && zero.vx < 15D && zero.status != 1 && zero.fuel > 0)
-        if (kright && zero.vx < 15D && zero.status != 1 && zero.fuel > 0)
+        //if (mValuesOrientation[0] < -2.5 && zero.vx < 15D && zero.status != 1 && zero.fuel > 0) {
+        if (kright && zero.vx < 15D && zero.status != 1 && zero.fuel > 0) {
+
             if (zero.dvy == 0.0D)
                 zero.vx += 0.40000000000000002D;
             else
                 zero.vx += 0.20000000000000001D;
 
+            kright = false;
+
+        }
+
         //if (mValuesOrientation[2] < -0.8 && zero.status != 1) {
         if (kdown && zero.status != 1) {
+
             if (zero.dvy == 0.0D)
                 zero.vy += 0.40000000000000002D;
             else
                 zero.vx += 0.20000000000000001D;
+
             zero.pos = 2;
+            kdown = false;
+
         }
 
 
@@ -474,7 +513,7 @@ public class PearlHarborScene extends Scene implements Runnable {
 
         if (kshoot) {
             if (zero.ams > 0) {
-
+                System.out.println("shoot!");
                 if (zero.vx > 0.0D)
                     ammos.add(new Bomb(zero.x + 25D, zero.y + 15D + zero.vy, zero.vx + 7D, zero.vy + zero.dvy + zero.vy));
                 else
@@ -491,11 +530,11 @@ public class PearlHarborScene extends Scene implements Runnable {
 
         clear();
 
-        /*
-        map.setPixels(spmap.getPixels());
+        map.setPixelValues(spmap.getPixels());
         for (int i = 0; i < 120; i++)
-            map.putPixel(200, 5 + i, 55);
+            map.putPixel(5 + i, 55, 200);
 
+        /*
         if (zero.status == -1 || zero.status == 0) {
 
             zero.fuel--;
@@ -551,14 +590,14 @@ public class PearlHarborScene extends Scene implements Runnable {
 
         for(Target t : targs) {
 
-            //int mtx = 5 + (int) (mapfx * t.x);
-            //if (t instanceof Carrier) {
-            //    map.putPixel(65280, mtx, 53);
-            //    map.putPixel(65280, mtx + 1, 53);
-            //} else {
-            //    map.putPixel(0xff0000, mtx, 53);
-            //    map.putPixel(0xff0000, mtx + 1, 53);
-            //}
+            int mtx = 5 + (int) (mapfx * t.x);
+            if (t instanceof Carrier) {
+                map.putPixel(mtx, 53, 0xff00ff00);
+                map.putPixel(mtx + 1, 53, 0xff00ff00);
+            } else {
+                map.putPixel(mtx, 53, 0xffff0000);
+                map.putPixel(mtx + 1, 53, 0xffff0000);
+            }
 
             if (t.x + t.w > zero.x && t.x < zero.x + 640D) {
 
@@ -700,12 +739,12 @@ public class PearlHarborScene extends Scene implements Runnable {
 
             a.move();
 
-            //int mtx = 5 + (int) (mapfx * ((Target) (a)).x);
-            //int mty = 5 + (int) (mapfy * ((Target) (a)).y);
-            //map.putPixel(0xffffff, mtx, mty);
-            //map.putPixel(0xffffff, mtx + 1, mty);
+            int mtx = 5 + (int) (mapfx * ((Target) (a)).x);
+            int mty = 5 + (int) (mapfy * ((Target) (a)).y);
+            map.putPixel(mtx, mty, 0xffffffff);
+            map.putPixel(mtx + 1, mty, 0xffffffff);
 
-            if (((Target) (a)).y > 255D) {
+            if (a.y > 255D) {
 
                 expiredAmplanes.add(a);
                 int splfix = a.vx <= 0.0D ? -30 : -55;
@@ -715,30 +754,29 @@ public class PearlHarborScene extends Scene implements Runnable {
                 //if (psplash != null)
                 //    psplash.play();
 
-            } else if (((Target) (a)).x + ((Target) (a)).w > zero.x && ((Target) (a)).x < zero.x + 640D) {
+            } else if (a.x + a.w > zero.x && a.x < zero.x + 640D) {
 
-                if (Math.abs(zero.y - ((Target) (a)).y) < 40D && zero.status == -1)
+                if (Math.abs(zero.y - a.y) < 40D && zero.status == -1)
 
                     if (a.vx > 0.0D) {
-                        if (zero.x + 320D > ((Target) (a)).x)
+                        if (zero.x + 320D > a.x)
                             a.shoot();
-                    } else if (zero.x + 320D < ((Target) (a)).x)
+                    } else if (zero.x + 320D < a.x)
                         a.shoot();
 
-                a.adx = (int) (((Target) (a)).x - zero.x);
+                a.adx = (int)(a.x - zero.x);
                 a.checkAmmos();
 
-                /*
                 if (a.vx > 0.0D) {
-                    drawSprite(((Target) (a)).pic[((Target) (a)).fp], (int) (((Target) (a)).x - zero.x), (int) ((Target) (a)).y, 0);
-                    if (((Target) (a)).d > ((Target) (a)).md)
-                        smokes.addElement(new Smoke((int) (((Target) (a)).x + Math.random() * 3D) - 10, (int) (((Target) (a)).y + Math.random() * 3D)));
+                    drawSprite(a.pic[a.fp], (int)(a.x - zero.x), (int)a.y, 0);
+                    if (a.d > a.md)
+                        smokes.add(new Smoke((int)(a.x + Math.random() * 3D) - 10, (int)(a.y + Math.random() * 3D)));
                 } else {
-                    drawSprite(((Target) (a)).pic[((Target) (a)).fp], (int) (((Target) (a)).x - zero.x), (int) ((Target) (a)).y, -1);
-                    if (((Target) (a)).d >= ((Target) (a)).md)
-                        smokes.addElement(new Smoke((int) (((Target) (a)).x + Math.random() * 3D) + 30, (int) (((Target) (a)).y + Math.random() * 3D)));
+                    drawSprite(a.pic[a.fp], (int)(a.x - zero.x), (int)a.y, -1);
+                    if (a.d >= a.md)
+                        smokes.add(new Smoke((int)(a.x + Math.random() * 3D) + 30, (int)(a.y + Math.random() * 3D)));
                 }
-                */
+
 
             }
 
@@ -746,57 +784,51 @@ public class PearlHarborScene extends Scene implements Runnable {
 
         ampls.removeAll(expiredAmplanes);
 
-        /*
         if (zero.dvy > 0.0D)
             if (zero.vx > 0.0D)
-                smokes.addElement(new Smoke((int) (320D + zero.x + Math.random() * 3D) - 10, (int) (zero.y + Math.random() * 3D)));
+                smokes.add(new Smoke((int) (320D + zero.x + Math.random() * 3D) - 10, (int) (zero.y + Math.random() * 3D)));
             else
-                smokes.addElement(new Smoke((int) (320D + zero.x + Math.random() * 3D) + 30, (int) (zero.y + Math.random() * 3D)));
+                smokes.add(new Smoke((int) (320D + zero.x + Math.random() * 3D) + 30, (int) (zero.y + Math.random() * 3D)));
         if (Math.abs(zero.vx) > 10D && zero.dvy > 0.0D)
             if (zero.vx > 0.0D)
-                smokes.addElement(new Smoke((int) (320D + zero.x + Math.random() * 3D) - 20, (int) (zero.y + Math.random() * 3D)));
+                smokes.add(new Smoke((int) (320D + zero.x + Math.random() * 3D) - 20, (int) (zero.y + Math.random() * 3D)));
             else
-                smokes.addElement(new Smoke((int) (320D + zero.x + Math.random() * 3D) + 40, (int) (zero.y + Math.random() * 3D)));
+                smokes.add(new Smoke((int) (320D + zero.x + Math.random() * 3D) + 40, (int) (zero.y + Math.random() * 3D)));
 
-        enum=smokes.elements();
-        do {
+        List<Smoke> expiredSmokes = new ArrayList<Smoke>();
+        for (Smoke ss: smokes) {
 
-            if (! enum.hasMoreElements())
-            break;
-
-            Smoke ss = (Smoke) enum.nextElement();
             ss.age++;
 
             if (ss.age > 30) {
-                smokes.removeElement(ss);
+                expiredSmokes.add(ss);
             } else {
                 smoke.setAlphaBlending((double) ss.age * 0.033000000000000002D);
                 ss.y -= 0.10000000000000001D;
                 if (ss.y - 10 >= 0 && (double) ss.x - zero.x - 10D >= 0.0D) {
                     tmpsurf2.fetchPixels(getPixels(), 640, (int) ((double) ss.x - zero.x) - 10, ss.y - 10);
                     tmpsurf2.draw(smoke, 10, 10, 10, 10, false, 0);
-                    blur.setPixels(tmpsurf2.getPixels(), 30, 30);
-                    blur.blur();
-                    screen.draw(blur, (int) ((double) ss.x - zero.x) - 10, ss.y - 10, 30, 30, false, 0);
+                    tmpsurf2.blur();
+                    screen.draw(tmpsurf2, (int) ((double) ss.x - zero.x) - 10, ss.y - 10, 30, 30, false, 0);
                 }
             }
 
-        } while (true);
+        }
 
-        int mtx = 5 + (int) (mapfx * (zero.x + 320D));
-        int mty = 5 + (int) (mapfy * zero.y);
-        map.putPixel(0xffff00, mtx, mty);
-        map.putPixel(0xffff00, mtx + 1, mty);
-        */
+        smokes.removeAll(expiredSmokes);
+
+        int mtx = 5 + (int)(mapfx * (zero.x + 320D));
+        int mty = 5 + (int)(mapfy * zero.y);
+        map.putPixel(mtx, mty, 0xffffff00);
+        map.putPixel(mtx + 1, mty, 0xffffff00);
 
         tmpsurf.fetchPixels(getPixels(), 640, 0, 170);
         water.process(tmpsurf.getPixels());
         screen.draw(water, 0, 260, 640, 90, true, 1);
 
-        /*
         screen.draw(map, 490, 10, 130, 70, true, 0);
 
-
+        /*
         if (apst > -1) {
             if (zero.y < 40D)
                 land0.setAlphaBlended(true);
@@ -1181,7 +1213,7 @@ public class PearlHarborScene extends Scene implements Runnable {
                 expiredAmmos.add(b);
             else
             if(bx > 0 && bx < 640 && b.type == -1)
-                putPixel(0xffff00, bx, (int)b.y);
+                putPixel(0xffffff00, bx, (int)b.y);
 
         }
 
