@@ -30,6 +30,12 @@ public class Sprite {
         this.h = h;
     }
 
+    public void clear(int color) {
+        for (int i = 0; i < pxl.length; i++) {
+            pxl[i] = color;
+        }
+    }
+
     public int getWidth() {
         return w;
     }

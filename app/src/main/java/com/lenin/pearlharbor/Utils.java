@@ -5,7 +5,7 @@ package com.lenin.pearlharbor;
  */
 public class Utils {
 
-    public static void rotate(double ang, int oldPix[], int newPix[], int width) {
+    public static void rotate(double ang, int oldPix[], int newPix[], int width, int bgcolor) {
 
         float angle = (float)(6.2831853071795862D - ang);
         int height = oldPix.length / width;
@@ -29,14 +29,12 @@ public class Utils {
         yOff = hh - (Xline[1] * hw + Yline[1] * hh);
         float xBase[][] = new float[2][width];
         float yBase[][] = new float[2][height];
-        for(int x = 0; x < width; x++)
-        {
+        for(int x = 0; x < width; x++) {
             xBase[0][x] = Xline[0] * (float)x + xOff;
             yBase[0][x] = Xline[1] * (float)x + yOff;
         }
 
-        for(int y = 0; y < height; y++)
-        {
+        for(int y = 0; y < height; y++) {
             xBase[1][y] = Yline[0] * (float)y;
             yBase[1][y] = Yline[1] * (float)y;
         }
@@ -50,7 +48,7 @@ public class Utils {
                 if((xi < width) & (yi < height) & (yi >= 0) & (xi >= 0))
                     newPix[y * width + x] = oldPix[yi * width + xi];
                 else
-                    newPix[y * width + x] = 0;
+                    newPix[y * width + x] = bgcolor;
             }
 
         }
